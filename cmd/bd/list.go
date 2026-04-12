@@ -426,6 +426,9 @@ var listCmd = &cobra.Command{
 		sqlLimit := effectiveLimit
 		if sortBy != "" {
 			sqlLimit = 0
+		} else if !limitChanged {
+			// Add one to the limit to detect truncation
+			sqlLimit = effectiveLimit + 1
 		}
 
 		filter := types.IssueFilter{
@@ -802,8 +805,9 @@ var listCmd = &cobra.Command{
 		sortIssues(issues, sortBy, reverse)
 
 		// Apply limit after sorting when --sort deferred it from SQL (GH#1237)
-		if sortBy != "" && effectiveLimit > 0 && len(issues) > effectiveLimit {
+		if (sortBy != "" || limitChanged) && effectiveLimit > 0 && len(issues) > effectiveLimit {
 			issues = issues[:effectiveLimit]
+			// Warn about truncation
 		}
 
 		// Handle watch mode (GH#654) - must be before other output modes
